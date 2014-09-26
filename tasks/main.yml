@@ -1,20 +1,17 @@
 ---
 
-- when:
-    ansible_distribution == 'Debian'
-    and ansible_distribution_major_version|int == 6
-  with_items:
-    - deb http://http.debian.net/debian squeeze-lts main contrib non-free
-    - deb-src http://http.debian.net/debian squeeze-lts main contrib non-free
-  apt_repository: 
-    repo="{{ item }}"
+- include: update.yml tags=update
 
-- when:
+- include: newer.yml tags=newer
+  when:
     ansible_distribution == 'Debian'
     and ansible_distribution_major_version|int >= 6
     or ansible_distribution == 'Ubuntu'
     and ansible_distribution_major_version|int >= 12
-  apt:
-    name=bash
-    state=latest
-    update_cache=yes
+
+- include: lenny.yml tags=lenny
+  when:
+    ansible_distribution == 'Debian'
+    and ansible_distribution_major_version|int == 5
+
+- include: check.yml tags=check

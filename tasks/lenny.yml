@@ -1,0 +1,126 @@
+- set_fact:
+    lenny: False
+    ref: https://gist.github.com/86de50d30134129e44ef.git
+    bash_url: http://ftp.gnu.org/gnu/bash
+    bash_version: 3.2
+
+- when:
+    ansible_distribution == 'Debian'
+    and ansible_distribution_major_version|int == 5
+  set_fact:
+    lenny: True
+    bash_tar_url: '{{ bash_url }}/bash-{{ bash_version }}.tar.gz'
+    bash_patches: '{{ bash_url }}/bash-{{ bash_version }}-patches'
+
+- when: lenny
+  apt: name={{ item }}
+  with_items:
+    - gcc
+    - bison
+  name: fix-bash-bug - lenny - install gcc and bison
+
+- when: lenny
+  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}.tar.gz
+  register: tgz
+  name: fix-bash-bug - lenny - register tgz file
+
+- when: lenny and fix_bash_bug_proxy and not tgz.stat.exists
+  get_url:
+    url={{ bash_tar_url }}
+    dest={{ fix_bash_bug_src }}
+  environment: 
+    http_proxy: "{{ fix_bash_bug_proxy }}"
+  name: fix-bash-bug - lenny - get bash sources using proxy
+
+- when: lenny and not fix_bash_bug_proxy and not tgz.stat.exists
+  get_url:
+    url={{ bash_tar_url }}
+    dest={{ fix_bash_bug_src }}
+  name: fix-bash-bug - lenny - get bash sources
+
+- when: lenny and run_mode
+  unarchive:
+    src={{ fix_bash_bug_src }}/bash-{{ bash_version }}.tar.gz
+    dest={{ fix_bash_bug_src }}
+    creates={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    copy=no
+  name: fix-bash-bug - lenny - untar bash sources
+
+- when: lenny
+  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/bash32-052
+  register: last_patch
+  name: fix-bash-bug - lenny - register last patch file
+
+- when: lenny and fix_bash_bug_proxy and not last_patch.stat.exists
+  with_sequence: start=1 end=52 format=%03g
+  get_url:
+    url={{ bash_patches }}/bash32-{{ item }}
+    dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+  environment: 
+    http_proxy: "{{ fix_bash_bug_proxy }}"
+  name: fix-bash-bug - lenny - get bash patches using proxy
+
+- when: lenny and not fix_bash_bug_proxy and not last_patch.stat.exists
+  with_sequence: start=1 end=52 format=%03g
+  get_url:
+    url={{ bash_patches }}/bash32-{{ item }}
+    dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+  name: fix-bash-bug - lenny - get bash patches
+
+- when: lenny
+  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+  register: dir
+  always_run: True
+
+- fail: msg='cant continue dry run without untaring bash sources files'
+  when: lenny and dry_mode and dir.stat.isdir is not defined
+
+- when: lenny
+  command:
+    awk -- '/#define PATCHLEVEL /{print $3}' patchlevel.h
+    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+  register: patchlevel
+  changed_when: False
+  name: fix-bash-bug - lenny - get patchlevel
+
+- name: fix-bash-bug - lenny - apply bash patches
+  with_sequence: start=1 end=52 format=%03g
+  when: lenny and item|int >= patchlevel.stdout|int
+  patch:
+    patchfile=bash32-{{ item }}
+    basedir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+
+- when: lenny
+  command:
+    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    creates=Makefile
+    ./configure
+  name: fix-bash-bug - lenny - configure
+
+- when: lenny
+  command:
+    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    creates=/usr/local/bin/bash
+    make install
+  name: fix-bash-bug - lenny - compile and install
+
+- when: lenny and False
+  command:
+    chdir=/bin
+    creates=bash.buggy
+    cp -p bash bash.buggy
+  name: fix-bash-bug - lenny - move out buggy one
+
+- when: lenny
+  command:
+    creates=/bin/bash.shellshock
+    install -pbS .shellshock  /usr/local/bin/bash /bin/bash
+  name: fix-bash-bug - lenny - install patched one
+
+- set_fact: mode=0400
+- when: ansible_version | version_compare('1.8', '>=')
+  set_fact: mode=a-x
+
+- when: lenny
+  file: path=/bin/bash.shellshock mode={{ mode }}
+  name: fix-bash-bug - lenny - paranoid last step

@@ -1,0 +1,5 @@
+---
+
+fix_bash_bug_proxy:
+fix_bash_bug_proxy_cache_valid_time: 300
+fix_bash_bug_src: /usr/local/src

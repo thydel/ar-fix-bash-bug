@@ -1,0 +1,11 @@
+---
+
+- command:
+    env x='() { :;}; echo vulnerable' /bin/bash -c "echo this is a test"
+  register: check
+  failed_when: check.stdout.find('vulnerable') != -1
+  changed_when: False
+  name: fix-bash-bug - use check snippet
+
+- debug: msg='{{ check.stdout }}'
+  name: fix-bash-bug - show output

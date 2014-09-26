@@ -1,5 +1,12 @@
 ---
 
 - hosts: all
+  gather_facts: |
+    {{ gather_facts | default(True) }}
+  vars:
+    fix_bash_bug_proxy: # http://proxy.domain.tld:3128
   roles:
-    - role: fix-bash-bug
+    - role: thydel.runp
+    - role: thydel.version-ansible
+    - role: thydel.patch
+    - role: thydel.fix-bash-bug
