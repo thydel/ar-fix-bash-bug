@@ -1,6 +1,6 @@
 # fix-bash-bug
 
-Update bash after shellshock
+Update bash on lenny and later debian after shellshock
 
 - Simple update for debian stable
 - Add `squeeze-lts` repository for previous stable (should have already been there)
