@@ -18,4 +18,8 @@ galaxy_info:
     - wheezy
   categories:
   - system
-dependencies: []
+dependencies:
+  - thydel.runp
+  - thydel.version-ansible
+  - thydel.patch
+
