@@ -1,10 +1,10 @@
 # fix-bash-bug
 
-Update bash.
+Update bash after shellshock
 
-- Simple for debian stable
-- I discover that I forget to add `squeeze-lts` repository to my previous stable hosts
-- Previous previous stable need to compile bash (only tested with `lenny`)
+- Simple update for debian stable
+- Add `squeeze-lts` repository for previous stable (should have already been there)
+- Compile `bash` from source for previous previous stable (only tested with `lenny`)
 
 Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271
 inspired by https://gist.github.com/86de50d30134129e44ef
