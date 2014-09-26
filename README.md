@@ -6,6 +6,9 @@ Update bash.
 - I discover that I forget to add `squeeze-lts` repository to my previous stable hosts
 - Previous previous stable need to compile bash (only tested with `lenny`)
 
+Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271
+inspired by https://gist.github.com/86de50d30134129e44ef
+
 ## Requirements
 
 - trigger `bash` source dowload and compilation for `lenny` (depends on `gcc` and `bison`)

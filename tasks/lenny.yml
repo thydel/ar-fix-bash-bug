@@ -1,6 +1,6 @@
 - set_fact:
     lenny: False
-    ref: https://gist.github.com/86de50d30134129e44ef.git
+    ref: https://gist.github.com/86de50d30134129e44ef
     bash_url: http://ftp.gnu.org/gnu/bash
     bash_version: 3.2
 
@@ -103,13 +103,6 @@
     creates=/usr/local/bin/bash
     make install
   name: fix-bash-bug - lenny - compile and install
-
-- when: lenny and False
-  command:
-    chdir=/bin
-    creates=bash.buggy
-    cp -p bash bash.buggy
-  name: fix-bash-bug - lenny - move out buggy one
 
 - when: lenny
   command:
