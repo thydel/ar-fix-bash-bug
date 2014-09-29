@@ -8,7 +8,7 @@
     - deb-src http://http.debian.net/debian squeeze-lts main contrib non-free
   apt_repository: 
     repo="{{ item }}"
-  name: fix-bash-bug - squeeze - add squeeze-lts repository
+  name: squeeze - add squeeze-lts repository
 
 - when:
     ansible_distribution == 'Debian'
@@ -20,4 +20,4 @@
     state=latest
     update_cache=yes
     cache_valid_time={{ fix_bash_bug_proxy_cache_valid_time }}
-  name: fix-bash-bug - squeeze, wheezy, ubuntu - update bash
+  name: squeeze, wheezy, ubuntu - update bash

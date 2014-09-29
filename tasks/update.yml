@@ -1,4 +1,4 @@
 ---
 
 - apt: update_cache=yes
-  name: fix-bash-bug - force apt repositorie cache update
+  name: update - force apt repositorie cache update

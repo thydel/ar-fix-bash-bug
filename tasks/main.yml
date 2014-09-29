@@ -9,7 +9,11 @@
     or ansible_distribution == 'Ubuntu'
     and ansible_distribution_major_version|int >= 12
 
-- include: lenny.yml tags=lenny
+- include: lenny.yml
+  tags: lenny
+  bash_version: 3.2
+  last_patch_number: 54
+  bash_url: http://ftp.gnu.org/gnu/bash
   when:
     ansible_distribution == 'Debian'
     and ansible_distribution_major_version|int == 5

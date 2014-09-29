@@ -10,6 +10,17 @@ Update bash on lenny and later debian after shellshock
 Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271, CVE-2014-7169
 inspired by https://gist.github.com/86de50d30134129e44ef
 
+Applying a set of patches is not idempotent friendly.  The `patch`
+module we use is able to tell if a patch is already applied, but as
+every new patch changes the `patchlevel` file we can only benefit
+this ability for the first yet unapplied patch. Yet, as we know via
+`patchlevel` what is the last applied patch we can skip already
+applied patches.
+
+Thus when a new set of patches is released and after changing the
+`last_patch_number` argument of `lenny` include task file in the
+`main` task file for the role you can reuse previous compile dir.
+
 ## Requirements
 
 - trigger `bash` source dowload and compilation for `lenny` (depends on `gcc` and `bison`)
@@ -60,6 +71,12 @@ ansible (date changes based idempotency)
 
 If the patchlevel of bash-3.2 is bump up you *must* force running make
 again by using `compile` extra var.
+
+## Bugs
+
+Should be two different role
+- trivial post lenny
+- convoluted lenny
 
 ## License
 

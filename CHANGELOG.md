@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 1.0.2
+
+* cometic changes
+* more local strings via set_facts
+* coherent naming for all tasks
+* remove useless when clauses
+* remove useless roles inclusion from test
+* better dry vs wet run and lenny vs other setup
+
 ## Version 1.0.1
 
 * lenny patch for CVE-2014-7169 up to patchlevel 54

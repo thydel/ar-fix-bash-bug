@@ -1,155 +1,145 @@
+---
+
 - local_action: "{{ item }}"
   with_items:
     - runp
     - ansible_version
-  name: fix-bash-bug - lenny - utils modules
+  name: lenny - utils modules
 
 - set_fact:
-    lenny: False
-    ref: https://gist.github.com/86de50d30134129e44ef
-    bash_url: http://ftp.gnu.org/gnu/bash
-    bash_version: 3.2
-    last_patch_number: 54
-
-- when:
-    ansible_distribution == 'Debian'
-    and ansible_distribution_major_version|int == 5
-  set_fact:
-    lenny: True
     bash_tar_url: '{{ bash_url }}/bash-{{ bash_version }}.tar.gz'
     bash_patches: '{{ bash_url }}/bash-{{ bash_version }}-patches'
+    bash_base: '{{ fix_bash_bug_src }}/bash-{{ bash_version }}'
+  name: lenny - local
 
-- when: lenny
-  apt: name={{ item }}
+- apt: name={{ item }}
   with_items:
     - gcc
     - bison
-  name: fix-bash-bug - lenny - install gcc and bison
+  name: lenny - install gcc and bison
 
-- when: lenny
-  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}.tar.gz
+- stat: path={{ bash_base }}.tar.gz
   register: tgz
-  name: fix-bash-bug - lenny - register tgz file
+  name: lenny - register tgz file
 
-- when: lenny and fix_bash_bug_proxy and not tgz.stat.exists
+- when: fix_bash_bug_proxy and not tgz.stat.exists
   get_url:
     url={{ bash_tar_url }}
     dest={{ fix_bash_bug_src }}
   environment: 
     http_proxy: "{{ fix_bash_bug_proxy }}"
-  name: fix-bash-bug - lenny - get bash sources using proxy
+  name: lenny - get bash sources using proxy
 
-- when: lenny and not fix_bash_bug_proxy and not tgz.stat.exists
+- when: not fix_bash_bug_proxy and not tgz.stat.exists
   get_url:
     url={{ bash_tar_url }}
     dest={{ fix_bash_bug_src }}
-  name: fix-bash-bug - lenny - get bash sources
+  name: lenny - get bash sources
 
-- when: lenny and run_mode
+- when: run_mode
   unarchive:
-    src={{ fix_bash_bug_src }}/bash-{{ bash_version }}.tar.gz
+    src={{ bash_base }}.tar.gz
     dest={{ fix_bash_bug_src }}
-    creates={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    creates={{ bash_base }}
     copy=no
-  name: fix-bash-bug - lenny - untar bash sources
+  name: lenny - untar bash sources
 
-- when: lenny
-  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/bash32-0{{ last_patch_number }}
+- stat: path={{ bash_base }}/bash32-0{{ last_patch_number }}
   register: last_patch_file
-  name: fix-bash-bug - lenny - register last patch file
+  name: lenny - register last patch file
 
-- when: lenny and fix_bash_bug_proxy and not last_patch_file.stat.exists
+- when: fix_bash_bug_proxy and not last_patch_file.stat.exists
   with_sequence: start=1 end={{ last_patch_number }} format=%03g
   get_url:
     url={{ bash_patches }}/bash32-{{ item }}
-    dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    dest={{ bash_base }}
   environment: 
     http_proxy: "{{ fix_bash_bug_proxy }}"
-  name: fix-bash-bug - lenny - get bash patches using proxy
+  name: lenny - get bash patches using proxy
 
-- when: lenny and not fix_bash_bug_proxy and not last_patch_file.stat.exists
+- when: not fix_bash_bug_proxy and not last_patch_file.stat.exists
   with_sequence: start=1 end={{ last_patch_number }} format=%03g
   get_url:
     url={{ bash_patches }}/bash32-{{ item }}
-    dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
-  name: fix-bash-bug - lenny - get bash patches
+    dest={{ bash_base }}
+  name: lenny - get bash patches
 
-- when: lenny
-  always_run: True
-  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+- stat: path={{ bash_base }}
   register: dir
+  always_run: True
+  name: lenny - register base dir
 
 - fail: msg='cant continue dry run without untaring bash sources files'
-  when: lenny and dry_mode and dir.stat.isdir is not defined
+  when: dry_mode and dir.stat.isdir is not defined
+  name: lenny - assert base dir
 
-- when: lenny
-  always_run: True
-  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/patchlevel.h
+- stat: path={{ bash_base }}/patchlevel.h
   register: patchlevel
+  always_run: True
+  name: lenny - register patchlevel file
 
-- when: lenny and patchlevel.stat.exists
+- when: patchlevel.stat.exists
   always_run: True
   command:
     awk -- '/#define PATCHLEVEL /{print $3}' patchlevel.h
-    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    chdir={{ bash_base }}
   register: patchlevel
   changed_when: False
-  name: fix-bash-bug - lenny - get patchlevel
+  name: lenny - get patchlevel
 
 - fail: msg='cant continue dry run without downloading patch files'
-  when: lenny and dry_mode and not last_patch_file.stat.exists
+  when: dry_mode and not last_patch_file.stat.exists
+  name: lenny - assert last patch file
 
-- name: fix-bash-bug - lenny - apply bash patches
+- name: lenny - apply bash patches
   with_sequence: start=1 end={{ last_patch_number }} format=%03g
-  when: lenny and item|int >= patchlevel.stdout|int
+  when: item|int >= patchlevel.stdout|int
   patch:
     patchfile=bash32-{{ item }}
-    basedir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    basedir={{ bash_base }}
 
-- when: lenny
-  command:
-    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+- command:
+    chdir={{ bash_base }}
     creates=Makefile
     ./configure
-  name: fix-bash-bug - lenny - configure once
+  name: lenny - configure once
 
-- when: lenny and configure|default(False)
+- when: configure|default(False)
   command:
-    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    chdir={{ bash_base }}
     ./configure
-  name: fix-bash-bug - lenny - configure again
+  name: lenny - configure again
 
-- when: lenny
-  command:
-    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+- command:
+    chdir={{ bash_base }}
     creates=/usr/local/bin/bash
     make install
-  name: fix-bash-bug - lenny - compile and install once
+  name: lenny - compile and install once
 
-- when: lenny and compile|default(False)
+- when: compile|default(False)
   command:
-    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    chdir={{ bash_base }}
     make install
-  name: fix-bash-bug - lenny - compile and install again
+  name: lenny - compile and install again
 
 - set_fact:
     install: install -pbS .shellshock  /usr/local/bin/bash /bin/bash
+    mode: '0400'
+  name: lenny - local facts
 
-- when: lenny
-  command:
-    creates=/bin/bash.shellshock
-    {{ install }}
-  name: fix-bash-bug - lenny - install patched one once
-
-- when: lenny and compile|default(False)
-  command: |
-    {{ install }}
-  name: fix-bash-bug - lenny - install patched one again
-
-- set_fact: mode=0400
 - when: ansible_version | version_compare('1.8', '>=')
   set_fact: mode=a-x
+  name: lenny - local facts
 
-- when: lenny
-  file: path=/bin/bash.shellshock mode={{ mode }}
-  name: fix-bash-bug - lenny - paranoid last step
+- command:
+    creates=/bin/bash.shellshock
+    {{ install }}
+  name: lenny - install patched one once
+
+- when: compile|default(False)
+  command: |
+    {{ install }}
+  name: lenny - install patched one again
+
+- file: path=/bin/bash.shellshock mode={{ mode }}
+  name: lenny - paranoid last step
