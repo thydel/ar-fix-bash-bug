@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 1.0.2
+## Version 1.1.1
 
 * cometic changes
 * more local strings via set_facts
@@ -9,7 +9,7 @@
 * remove useless roles inclusion from test
 * better dry vs wet run and lenny vs other setup
 
-## Version 1.0.1
+## Version 1.1.0
 
 * lenny patch for CVE-2014-7169 up to patchlevel 54
 * add a test for CVE-2014-7169
