@@ -5,7 +5,19 @@
   register: check
   failed_when: check.stdout.find('vulnerable') != -1
   changed_when: False
-  name: fix-bash-bug - use check snippet
+  name: fix-bash-bug - use check snippet CVE-2014-6271
 
 - debug: msg='{{ check.stdout }}'
-  name: fix-bash-bug - show output
+  name: fix-bash-bug - show output CVE-2014-6271
+
+# ansible will not accept unbalanced quote line and has no here
+# document so we have to use an external file
+- script: CVE-2014-7169.sh
+  register: check2
+  failed_when: check.stdout.find('date') == -1
+  ignore_errors: True
+  changed_when: False
+  name: fix-bash-bug - use check snippet CVE-2014-7169
+
+- debug: msg='{{ check2.stdout }}'
+  name: fix-bash-bug - show output CVE-2014-7169

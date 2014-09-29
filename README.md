@@ -5,8 +5,9 @@ Update bash on lenny and later debian after shellshock
 - Simple update for debian stable
 - Add `squeeze-lts` repository for previous stable (should have already been there)
 - Compile `bash` from source for previous previous stable (only tested with `lenny`)
+- Up to patchlvel 54 for CVE-2014-7169
 
-Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271
+Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271, CVE-2014-7169
 inspired by https://gist.github.com/86de50d30134129e44ef
 
 ## Requirements
@@ -28,6 +29,7 @@ ansible-playbook fix-bash-bug.yml -t update -e gather_facts=False # apt update
 ansible-playbook fix-bash-bug.yml -t newer                        # post lenny
 ansible-playbook fix-bash-bug.yml -t lenny                        # lenny only
 ansible-playbook fix-bash-bug.yml -t check -e gather_facts=False  # shellshock snippet test only
+ansible-playbook fix-bash-bug.yml -t lenny -e 'compile=True'      # force recompile
 ```
 
 ## Dependencies
@@ -51,9 +53,13 @@ ansible-playbook fix-bash-bug.yml -t check -e gather_facts=False  # shellshock s
     - role: thydel.fix-bash-bug
 ```
 
-## Bugs
+## Warning
 
-Depencies not yet uploaded
+I presently dont know how to get a Makefile like behaviour from
+ansible (date changes based idempotency)
+
+If the patchlevel of bash-3.2 is bump up you *must* force running make
+again by using `compile` extra var.
 
 ## License
 

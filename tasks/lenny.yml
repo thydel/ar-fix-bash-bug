@@ -1,8 +1,15 @@
+- local_action: "{{ item }}"
+  with_items:
+    - runp
+    - ansible_version
+  name: fix-bash-bug - lenny - utils modules
+
 - set_fact:
     lenny: False
     ref: https://gist.github.com/86de50d30134129e44ef
     bash_url: http://ftp.gnu.org/gnu/bash
     bash_version: 3.2
+    last_patch_number: 54
 
 - when:
     ansible_distribution == 'Debian'
@@ -47,12 +54,12 @@
   name: fix-bash-bug - lenny - untar bash sources
 
 - when: lenny
-  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/bash32-052
-  register: last_patch
+  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/bash32-0{{ last_patch_number }}
+  register: last_patch_file
   name: fix-bash-bug - lenny - register last patch file
 
-- when: lenny and fix_bash_bug_proxy and not last_patch.stat.exists
-  with_sequence: start=1 end=52 format=%03g
+- when: lenny and fix_bash_bug_proxy and not last_patch_file.stat.exists
+  with_sequence: start=1 end={{ last_patch_number }} format=%03g
   get_url:
     url={{ bash_patches }}/bash32-{{ item }}
     dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
@@ -60,22 +67,28 @@
     http_proxy: "{{ fix_bash_bug_proxy }}"
   name: fix-bash-bug - lenny - get bash patches using proxy
 
-- when: lenny and not fix_bash_bug_proxy and not last_patch.stat.exists
-  with_sequence: start=1 end=52 format=%03g
+- when: lenny and not fix_bash_bug_proxy and not last_patch_file.stat.exists
+  with_sequence: start=1 end={{ last_patch_number }} format=%03g
   get_url:
     url={{ bash_patches }}/bash32-{{ item }}
     dest={{ fix_bash_bug_src }}/bash-{{ bash_version }}
   name: fix-bash-bug - lenny - get bash patches
 
 - when: lenny
+  always_run: True
   stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}
   register: dir
-  always_run: True
 
 - fail: msg='cant continue dry run without untaring bash sources files'
   when: lenny and dry_mode and dir.stat.isdir is not defined
 
 - when: lenny
+  always_run: True
+  stat: path={{ fix_bash_bug_src }}/bash-{{ bash_version }}/patchlevel.h
+  register: patchlevel
+
+- when: lenny and patchlevel.stat.exists
+  always_run: True
   command:
     awk -- '/#define PATCHLEVEL /{print $3}' patchlevel.h
     chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
@@ -83,8 +96,11 @@
   changed_when: False
   name: fix-bash-bug - lenny - get patchlevel
 
+- fail: msg='cant continue dry run without downloading patch files'
+  when: lenny and dry_mode and not last_patch_file.stat.exists
+
 - name: fix-bash-bug - lenny - apply bash patches
-  with_sequence: start=1 end=52 format=%03g
+  with_sequence: start=1 end={{ last_patch_number }} format=%03g
   when: lenny and item|int >= patchlevel.stdout|int
   patch:
     patchfile=bash32-{{ item }}
@@ -95,20 +111,40 @@
     chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
     creates=Makefile
     ./configure
-  name: fix-bash-bug - lenny - configure
+  name: fix-bash-bug - lenny - configure once
+
+- when: lenny and configure|default(False)
+  command:
+    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    ./configure
+  name: fix-bash-bug - lenny - configure again
 
 - when: lenny
   command:
     chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
     creates=/usr/local/bin/bash
     make install
-  name: fix-bash-bug - lenny - compile and install
+  name: fix-bash-bug - lenny - compile and install once
+
+- when: lenny and compile|default(False)
+  command:
+    chdir={{ fix_bash_bug_src }}/bash-{{ bash_version }}
+    make install
+  name: fix-bash-bug - lenny - compile and install again
+
+- set_fact:
+    install: install -pbS .shellshock  /usr/local/bin/bash /bin/bash
 
 - when: lenny
   command:
     creates=/bin/bash.shellshock
-    install -pbS .shellshock  /usr/local/bin/bash /bin/bash
-  name: fix-bash-bug - lenny - install patched one
+    {{ install }}
+  name: fix-bash-bug - lenny - install patched one once
+
+- when: lenny and compile|default(False)
+  command: |
+    {{ install }}
+  name: fix-bash-bug - lenny - install patched one again
 
 - set_fact: mode=0400
 - when: ansible_version | version_compare('1.8', '>=')
