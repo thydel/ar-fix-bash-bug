@@ -59,9 +59,6 @@ ansible-playbook fix-bash-bug.yml -t lenny -e 'compile=True'      # force recomp
     fix_bash_bug_proxy: http://proxy.domain.tld:3128
   roles:
     - role: thydel.runp
-    - role: thydel.version-ansible
-    - role: thydel.patch
-    - role: thydel.fix-bash-bug
 ```
 
 ## Warning
