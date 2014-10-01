@@ -1,9 +1,9 @@
 # Changelog
 
-## Version 1.1.1
+## Version 1.1.2
 
 * up to patchlevel 55
-* better patvh loop
+* better patch loop
 
 ## Version 1.1.1
 
