@@ -12,7 +12,7 @@
 - include: lenny.yml
   tags: lenny
   bash_version: 3.2
-  last_patch_number: 54
+  last_patch_number: 55
   bash_url: http://ftp.gnu.org/gnu/bash
   when:
     ansible_distribution == 'Debian'

@@ -91,9 +91,18 @@
   when: dry_mode and not last_patch_file.stat.exists
   name: lenny - assert last patch file
 
+# - name: lenny - apply bash patches
+#   with_sequence: start=1 end={{ last_patch_number }} format=%03g
+#   when: and item|int >= patchlevel.stdout|int
+#   patch:
+#     patchfile=bash32-{{ item }}
+#     basedir={{ bash_base }}
+
 - name: lenny - apply bash patches
-  with_sequence: start=1 end={{ last_patch_number }} format=%03g
-  when: item|int >= patchlevel.stdout|int
+  with_sequence:
+    start={{ patchlevel.stdout }}
+    end={{ last_patch_number }}
+    format=%03g
   patch:
     patchfile=bash32-{{ item }}
     basedir={{ bash_base }}

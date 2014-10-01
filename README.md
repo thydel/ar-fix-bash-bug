@@ -6,6 +6,7 @@ Update bash on lenny and later debian after shellshock
 - Add `squeeze-lts` repository for previous stable (should have already been there)
 - Compile `bash` from source for previous previous stable (only tested with `lenny`)
 - Up to patchlvel 54 for CVE-2014-7169
+- Up to patchlvel 55
 
 Compile bash 3.2 from source for Debian Lenny to patch CVE-2014-6271, CVE-2014-7169
 inspired by https://gist.github.com/86de50d30134129e44ef

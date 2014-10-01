@@ -2,6 +2,11 @@
 
 ## Version 1.1.1
 
+* up to patchlevel 55
+* better patvh loop
+
+## Version 1.1.1
+
 * cometic changes
 * more local strings via set_facts
 * coherent naming for all tasks
